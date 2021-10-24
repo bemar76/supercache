@@ -17,6 +17,8 @@ public class DefaultRemoteChannelSender<K extends Serializable, V extends Serial
 	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRemoteChannelSender.class);
 
 	private final CacheClient<K, V> client;
+	
+	private final Build in a cache to send
 
 	public DefaultRemoteChannelSender(CacheClient<K, V> client) {
 		super();

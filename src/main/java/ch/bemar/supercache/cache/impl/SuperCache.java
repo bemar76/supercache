@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.Lists;
 
-import ch.bemar.supercache.cache.IChacheLoader;
+import ch.bemar.supercache.cache.IPersistenceChannel;
 import ch.bemar.supercache.cache.IRemoteSenderChannel;
 import ch.bemar.supercache.comm.ITransferContainer.OPERATION;
 
@@ -20,9 +20,9 @@ public class SuperCache<K extends Serializable, V extends Serializable> {
 
 	private List<IRemoteSenderChannel<K, V>> senders;
 
-	public SuperCache(String name, IChacheLoader<K, V> cacheLoader) {
+	public SuperCache(String name, IPersistenceChannel<K, V> channel) {
 		LOGGER.info("Initializing {}", name);
-		cache = new TheCache<K, V>(name, cacheLoader);
+		cache = new TheCache<>(name, channel);
 
 		this.senders = Lists.newArrayList();
 	}
@@ -57,5 +57,9 @@ public class SuperCache<K extends Serializable, V extends Serializable> {
 		for (IRemoteSenderChannel<K, V> sender : senders) {
 			sender.send(key, value, op);
 		}
+	}
+
+	public String getName() {
+		return this.cache.getName();
 	}
 }

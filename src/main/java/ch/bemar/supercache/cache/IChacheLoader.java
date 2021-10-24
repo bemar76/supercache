@@ -11,4 +11,8 @@ public interface IChacheLoader<K extends Serializable, V extends Serializable> {
 
 	public Map<K, V> loadAll();
 
+	public void put(K key, V value);
+
+	public V remove(K key);
+
 }

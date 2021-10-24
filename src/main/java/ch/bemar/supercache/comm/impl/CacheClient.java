@@ -30,6 +30,7 @@ public class CacheClient<K extends Serializable, V extends Serializable> {
 		Socket clientSocket = null;
 		try {
 			clientSocket = new Socket(getHost(), getPort());
+			clientSocket.setSoTimeout(2000);
 
 			LOGGER.debug("Sending");
 			String answer = serializeAndSend(container, clientSocket);

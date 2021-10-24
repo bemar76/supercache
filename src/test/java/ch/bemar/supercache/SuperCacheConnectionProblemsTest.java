@@ -15,7 +15,7 @@ import ch.bemar.supercache.comm.impl.CacheClient;
 import ch.bemar.supercache.comm.impl.CacheServer;
 import ch.bemar.supercache.comm.impl.IncomingTransferListener;
 
-public class SuperCacheTest {
+public class SuperCacheConnectionProblemsTest {
 
 	private static SuperCache<String, String> cache1;
 	private static SuperCache<String, String> cache2;
