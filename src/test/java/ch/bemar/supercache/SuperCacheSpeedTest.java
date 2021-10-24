@@ -1,8 +1,6 @@
 package ch.bemar.supercache;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,64 +13,80 @@ import ch.bemar.supercache.comm.impl.CacheClient;
 import ch.bemar.supercache.comm.impl.CacheServer;
 import ch.bemar.supercache.comm.impl.IncomingTransferListener;
 
-public class SuperCacheTest {
+public class SuperCacheSpeedTest {
 
 	private static SuperCache<String, String> cache1;
 	private static SuperCache<String, String> cache2;
 
+	private static PersistenceLoadChannel<String, String> database;
+
 	@BeforeAll
 	public static void beforeClass() throws IOException {
+		
+		database = new PersistenceLoadChannel<>();
+		
 		cache1 = configureCache("localhost:6666", 6665, "MyCache1");
 		cache2 = configureCache("localhost:6665", 6666, "MyCache2");
-
+	
 	}
 
 	@Test
-	public void testCachePreload() throws InterruptedException {
+	public void testCache10000Rounds() throws IOException, InterruptedException {
 
-		for (int i = 1; i < 5; i++) {
-			String value1 = cache1.get("" + i);
-			String value2 = cache1.get("" + i);
+		ThreadGroup tg = new ThreadGroup("putters");
 
-			Assertions.assertEquals("Value " + i, value1);
-			Assertions.assertEquals("Value " + i, value2);
+		Thread t1 = new Thread(tg, new Runnable() {
+
+			@Override
+			public void run() {
+				putToCache(cache1);
+
+			}
+		});
+
+		Thread t2 = new Thread(tg, new Runnable() {
+
+			@Override
+			public void run() {
+				putToCache(cache2);
+
+			}
+		});
+
+		t1.start();
+		t2.start();
+
+		while (tg.activeCount() > 0) {
+			Thread.currentThread().sleep(500);
+		}
+
+		for (int i = 0; i < 10000; i++) {
+
+			String value1 = database.get(cache1.getName() + "-Key-" + i);
+			Assertions.assertEquals(cache1.getName() + "-Value-" + i, value1);
+
+			String value2 = database.get(cache2.getName() + "-Key-" + i);
+			Assertions.assertEquals(cache2.getName() + "-Value-" + i, value2);
+
+			value1 = cache1.get(cache1.getName() + "-Key-" + i);
+			Assertions.assertEquals(cache1.getName() + "-Value-" + i, value1);
+
+			value2 = cache2.get(cache2.getName() + "-Key-" + i);
+			Assertions.assertEquals(cache2.getName() + "-Value-" + i, value2);
 
 		}
 
-		cache1.put("hello", "world");
-		String value = cache2.get("hello");
-
-		Assertions.assertEquals("world", value);
-
 	}
 
-	@Test
-	public void testCacheValueDistribute() throws IOException, InterruptedException {
+	private void putToCache(SuperCache cache) {
 
-		cache1.put("hello", "world");
-		String value = cache2.get("hello");
-
-		Assertions.assertEquals("world", value);
-
-	}
-
-	@Test
-	public void testCacheValueRemoveDistribute() throws IOException, InterruptedException {
-
-		Assertions.assertTrue(cache1.remove("hello"));
-		String value = cache2.get("hello");
-
-		Assertions.assertNull(value);
+		for (int i = 0; i < 10000; i++) {
+			cache.put(cache.getName() + "-Key-" + i, cache.getName() + "-Value-" + i);
+		}
 
 	}
 
 	private static SuperCache<String, String> configureCache(String other, int port, String name) throws IOException {
-
-		Map<String, String> preload = new HashMap<>();
-		preload.put("1", "Value 1");
-		preload.put("2", "Value 2");
-		preload.put("3", "Value 3");
-		preload.put("4", "Value 4");
 
 		DefaultRemoteChannelReceiver<String, String> receiver = new DefaultRemoteChannelReceiver<>();
 
@@ -84,10 +98,7 @@ public class SuperCacheTest {
 
 		CacheServer<String, String> server = new CacheServer<>(port, listener);
 
-		PersistenceLoadChannel<String, String> databaseChannel = new PersistenceLoadChannel<>();
-		databaseChannel.preload(preload);
-
-		SuperCache<String, String> cache = new SuperCache<>(name, databaseChannel);
+		SuperCache<String, String> cache = new SuperCache<>(name, database);
 		cache.registerRemoteSenderChannel(sender);
 
 		receiver.registerCache(cache);

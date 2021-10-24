@@ -8,8 +8,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.bemar.supercache.cache.IChacheLoader;
 import ch.bemar.supercache.cache.IEvictionPolicy;
+import ch.bemar.supercache.cache.IPersistenceChannel;
 import ch.bemar.supercache.exception.CacheException;
 
 public class TheCache<K extends Serializable, V extends Serializable> implements Serializable {
@@ -18,7 +18,7 @@ public class TheCache<K extends Serializable, V extends Serializable> implements
 
 	private static final long serialVersionUID = -7236566513268175100L;
 
-	private final IChacheLoader<K, V> loader;
+	private IPersistenceChannel<K, V> persistenceChannel;
 
 	private final IEvictionPolicy<K, V> evictionPolicy;
 
@@ -26,25 +26,41 @@ public class TheCache<K extends Serializable, V extends Serializable> implements
 
 	private final String name;
 
-	public TheCache(String name, IChacheLoader<K, V> loader) {
-		this(name, loader, null);
+	public TheCache(String name, IPersistenceChannel<K, V> pChannel) {
+		this(name, pChannel, null);
 	}
 
-	public TheCache(String name, IChacheLoader<K, V> loader, IEvictionPolicy<K, V> evictionPolicy) {
+	public TheCache(String name, IPersistenceChannel<K, V> pChannel, IEvictionPolicy<K, V> evictionPolicy) {
+		LOGGER = LoggerFactory.getLogger(TheCache.class + " | " + name);
+
 		this.name = name;
 		this.cache = Collections.synchronizedMap(new HashMap<K, V>());
 		this.evictionPolicy = evictionPolicy;
-		this.loader = loader;
-		LOGGER = LoggerFactory.getLogger(TheCache.class + " | " + name);
 
-		if (this.loader != null) {
-			loadAll();
+		setPersistanceChannel(pChannel);
+
+		loadAll();
+
+	}
+
+	private void setPersistanceChannel(IPersistenceChannel<K, V> pChannel) {
+		if (pChannel != null) {
+
+			this.persistenceChannel = pChannel;
+			LOGGER.debug("Setting persistance channel");
+
+		} else {
+
+			this.persistenceChannel = new DummyPersistenceChannel<>();
+			LOGGER.debug("Setting persistance channel with dummy channel");
 		}
 	}
 
 	void loadAll() {
+
 		LOGGER.debug("loadAll");
-		cache.putAll(loader.loadAll());
+		cache.putAll(persistenceChannel.loadAll());
+
 	}
 
 	public boolean containsKey(K key) {
@@ -59,8 +75,10 @@ public class TheCache<K extends Serializable, V extends Serializable> implements
 
 		V value = null;
 		try {
-			value = loader.load(key);
-			cache.put(key, value);
+			value = persistenceChannel.load(key);
+			
+			if (value != null)
+				put(key, value);
 
 		} catch (CacheException e) {
 			LOGGER.error("Error getting key " + key + " from loader", e);
@@ -70,8 +88,9 @@ public class TheCache<K extends Serializable, V extends Serializable> implements
 	}
 
 	public void put(K key, V value) {
-
+		LOGGER.trace("Putting key '{}' with value '{}' to cache", key, value);
 		cache.put(key, value);
+		persistenceChannel.put(key, value);
 	}
 
 	public boolean putIfAbsent(K key, V value) {
@@ -85,7 +104,9 @@ public class TheCache<K extends Serializable, V extends Serializable> implements
 	}
 
 	public void evict(K key) {
+		LOGGER.trace("Removing key '{}' from cache", key);
 		cache.remove(key);
+		persistenceChannel.remove(key);
 	}
 
 	public boolean evictIfPresent(K key) {
@@ -94,12 +115,11 @@ public class TheCache<K extends Serializable, V extends Serializable> implements
 			return false;
 		}
 
-		cache.remove(key);
+		evict(key);
 		return true;
 	}
 
 	public void clear() {
-
 		cache.clear();
 	}
 

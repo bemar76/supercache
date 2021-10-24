@@ -8,22 +8,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import ch.bemar.supercache.cache.impl.DefaultRemoteChannelReceiver;
-import ch.bemar.supercache.cache.impl.DefaultRemoteChannelSender;
 import ch.bemar.supercache.cache.impl.SuperCache;
-import ch.bemar.supercache.comm.impl.CacheClient;
-import ch.bemar.supercache.comm.impl.CacheServer;
-import ch.bemar.supercache.comm.impl.IncomingTransferListener;
 
-public class SuperCacheTest {
+public class SuperCacheWithoutRemoteTest {
 
-	private static SuperCache<String, String> cache1;
-	private static SuperCache<String, String> cache2;
+	private static SuperCache<String, String> cache;
 
 	@BeforeAll
 	public static void beforeClass() throws IOException {
-		cache1 = configureCache("localhost:6666", 6665, "MyCache1");
-		cache2 = configureCache("localhost:6665", 6666, "MyCache2");
+		cache = configureCache("localhost:6666", 6665, "MyCache1");
 
 	}
 
@@ -31,16 +24,16 @@ public class SuperCacheTest {
 	public void testCachePreload() throws InterruptedException {
 
 		for (int i = 1; i < 5; i++) {
-			String value1 = cache1.get("" + i);
-			String value2 = cache1.get("" + i);
+			String value1 = cache.get("" + i);
+			String value2 = cache.get("" + i);
 
 			Assertions.assertEquals("Value " + i, value1);
 			Assertions.assertEquals("Value " + i, value2);
 
 		}
 
-		cache1.put("hello", "world");
-		String value = cache2.get("hello");
+		cache.put("hello", "world");
+		String value = cache.get("hello");
 
 		Assertions.assertEquals("world", value);
 
@@ -49,8 +42,8 @@ public class SuperCacheTest {
 	@Test
 	public void testCacheValueDistribute() throws IOException, InterruptedException {
 
-		cache1.put("hello", "world");
-		String value = cache2.get("hello");
+		cache.put("hello", "world");
+		String value = cache.get("hello");
 
 		Assertions.assertEquals("world", value);
 
@@ -59,8 +52,8 @@ public class SuperCacheTest {
 	@Test
 	public void testCacheValueRemoveDistribute() throws IOException, InterruptedException {
 
-		Assertions.assertTrue(cache1.remove("hello"));
-		String value = cache2.get("hello");
+		Assertions.assertTrue(cache.remove("hello"));
+		String value = cache.get("hello");
 
 		Assertions.assertNull(value);
 
@@ -74,23 +67,10 @@ public class SuperCacheTest {
 		preload.put("3", "Value 3");
 		preload.put("4", "Value 4");
 
-		DefaultRemoteChannelReceiver<String, String> receiver = new DefaultRemoteChannelReceiver<>();
-
-		CacheClient<String, String> client = new CacheClient<>(other);
-
-		DefaultRemoteChannelSender<String, String> sender = new DefaultRemoteChannelSender<>(client);
-
-		IncomingTransferListener<String, String> listener = new IncomingTransferListener<>(receiver);
-
-		CacheServer<String, String> server = new CacheServer<>(port, listener);
-
 		PersistenceLoadChannel<String, String> databaseChannel = new PersistenceLoadChannel<>();
 		databaseChannel.preload(preload);
 
 		SuperCache<String, String> cache = new SuperCache<>(name, databaseChannel);
-		cache.registerRemoteSenderChannel(sender);
-
-		receiver.registerCache(cache);
 
 		return cache;
 
