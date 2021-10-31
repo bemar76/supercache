@@ -28,6 +28,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>ch.bemar.comm</groupId>
+			<artifactId>communicator</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>ch.qos.logback</groupId>

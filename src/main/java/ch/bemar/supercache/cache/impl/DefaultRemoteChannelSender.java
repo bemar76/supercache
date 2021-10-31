@@ -6,9 +6,9 @@ import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.bemar.supercache.cache.IRemoteSenderChannel;
+import ch.bemar.supercache.comm.IRemoteSenderChannel;
 import ch.bemar.supercache.comm.ITransferContainer.OPERATION;
-import ch.bemar.supercache.comm.impl.CacheClient;
+import ch.bemar.supercache.comm.impl.CommClient;
 import ch.bemar.supercache.comm.impl.TransferContainer;
 
 public class DefaultRemoteChannelSender<K extends Serializable, V extends Serializable>
@@ -16,11 +16,10 @@ public class DefaultRemoteChannelSender<K extends Serializable, V extends Serial
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultRemoteChannelSender.class);
 
-	private final CacheClient<K, V> client;
+	private final CommClient<K, V> client;
 	
-	private final Build in a cache to send
 
-	public DefaultRemoteChannelSender(CacheClient<K, V> client) {
+	public DefaultRemoteChannelSender(CommClient<K, V> client) {
 		super();
 		this.client = client;
 	}

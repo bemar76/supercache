@@ -2,18 +2,23 @@ package ch.bemar.supercache;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ch.bemar.supercache.cache.impl.DefaultRemoteChannelReceiver;
 import ch.bemar.supercache.cache.impl.DefaultRemoteChannelSender;
 import ch.bemar.supercache.cache.impl.SuperCache;
-import ch.bemar.supercache.comm.impl.CacheClient;
-import ch.bemar.supercache.comm.impl.CacheServer;
+import ch.bemar.supercache.comm.impl.CommClient;
+import ch.bemar.supercache.comm.impl.CommServer;
 import ch.bemar.supercache.comm.impl.IncomingTransferListener;
 
 public class SuperCacheSpeedTest {
+
+	private static Logger LOGGER = LoggerFactory.getLogger(SuperCacheSpeedTest.class);
 
 	private static SuperCache<String, String> cache1;
 	private static SuperCache<String, String> cache2;
@@ -22,12 +27,12 @@ public class SuperCacheSpeedTest {
 
 	@BeforeAll
 	public static void beforeClass() throws IOException {
-		
+
 		database = new PersistenceLoadChannel<>();
-		
+
 		cache1 = configureCache("localhost:6666", 6665, "MyCache1");
 		cache2 = configureCache("localhost:6665", 6666, "MyCache2");
-	
+
 	}
 
 	@Test
@@ -53,12 +58,18 @@ public class SuperCacheSpeedTest {
 			}
 		});
 
+		StopWatch sw = StopWatch.createStarted();
+
 		t1.start();
 		t2.start();
 
 		while (tg.activeCount() > 0) {
 			Thread.currentThread().sleep(500);
 		}
+
+		sw.stop();
+
+		LOGGER.info("Das hat {} gedauert", sw.formatTime());
 
 		for (int i = 0; i < 10000; i++) {
 
@@ -90,13 +101,13 @@ public class SuperCacheSpeedTest {
 
 		DefaultRemoteChannelReceiver<String, String> receiver = new DefaultRemoteChannelReceiver<>();
 
-		CacheClient<String, String> client = new CacheClient<>(other);
+		CommClient<String, String> client = new CommClient<>(other);
 
 		DefaultRemoteChannelSender<String, String> sender = new DefaultRemoteChannelSender<>(client);
 
 		IncomingTransferListener<String, String> listener = new IncomingTransferListener<>(receiver);
 
-		CacheServer<String, String> server = new CacheServer<>(port, listener);
+		CommServer<String, String> server = new CommServer<>(port, listener);
 
 		SuperCache<String, String> cache = new SuperCache<>(name, database);
 		cache.registerRemoteSenderChannel(sender);

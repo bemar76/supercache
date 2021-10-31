@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import ch.bemar.supercache.cache.impl.DefaultRemoteChannelReceiver;
 import ch.bemar.supercache.cache.impl.DefaultRemoteChannelSender;
 import ch.bemar.supercache.cache.impl.SuperCache;
-import ch.bemar.supercache.comm.impl.CacheClient;
-import ch.bemar.supercache.comm.impl.CacheServer;
+import ch.bemar.supercache.comm.impl.CommClient;
+import ch.bemar.supercache.comm.impl.CommServer;
 import ch.bemar.supercache.comm.impl.IncomingTransferListener;
 
 public class SuperCacheConnectionProblemsTest {
@@ -76,13 +76,13 @@ public class SuperCacheConnectionProblemsTest {
 
 		DefaultRemoteChannelReceiver<String, String> receiver = new DefaultRemoteChannelReceiver<>();
 
-		CacheClient<String, String> client = new CacheClient<>(other);
+		CommClient<String, String> client = new CommClient<>(other);
 
 		DefaultRemoteChannelSender<String, String> sender = new DefaultRemoteChannelSender<>(client);
 
 		IncomingTransferListener<String, String> listener = new IncomingTransferListener<>(receiver);
 
-		CacheServer<String, String> server = new CacheServer<>(port, listener);
+		CommServer<String, String> server = new CommServer<>(port, listener);
 
 		PersistenceLoadChannel<String, String> databaseChannel = new PersistenceLoadChannel<>();
 		databaseChannel.preload(preload);

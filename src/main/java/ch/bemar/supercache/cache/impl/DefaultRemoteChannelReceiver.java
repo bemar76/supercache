@@ -2,7 +2,7 @@ package ch.bemar.supercache.cache.impl;
 
 import java.io.Serializable;
 
-import ch.bemar.supercache.cache.IRemoteReceiverChannel;
+import ch.bemar.supercache.comm.IRemoteReceiverChannel;
 
 public class DefaultRemoteChannelReceiver<K extends Serializable, V extends Serializable>
 		implements IRemoteReceiverChannel<K, V> {
@@ -14,7 +14,6 @@ public class DefaultRemoteChannelReceiver<K extends Serializable, V extends Seri
 		superCache.putFromRemote(key, value);
 	}
 
-	@Override
 	public void registerCache(SuperCache<K, V> cache) {
 		this.superCache = cache;
 

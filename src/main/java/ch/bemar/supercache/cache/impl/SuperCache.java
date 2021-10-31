@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Lists;
 
 import ch.bemar.supercache.cache.IPersistenceChannel;
-import ch.bemar.supercache.cache.IRemoteSenderChannel;
+import ch.bemar.supercache.comm.IRemoteSenderChannel;
 import ch.bemar.supercache.comm.ITransferContainer.OPERATION;
 
 public class SuperCache<K extends Serializable, V extends Serializable> {
